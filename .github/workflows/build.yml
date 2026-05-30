@@ -1,0 +1,106 @@
+name: Build Debian Packages
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: ${{ matrix.distro }} / ${{ matrix.arch }}
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        distro:
+          - name: debian-13
+            image: debian:trixie-slim
+            codename: trixie
+            enable-universe: false
+          - name: ubuntu-22.04
+            image: ubuntu:22.04
+            codename: jammy
+            enable-universe: true
+          - name: ubuntu-24.04
+            image: ubuntu:24.04
+            codename: noble
+            enable-universe: true
+        arch:
+          - amd64
+          - arm64
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up QEMU (for ARM64)
+        if: matrix.arch == 'arm64'
+        uses: docker/setup-qemu-action@v3
+        with:
+          platforms: arm64
+
+      - name: Build .deb
+        run: |
+          docker run --rm \
+            --platform linux/${{ matrix.arch }} \
+            -v ${{ github.workspace }}:/workspace \
+            -w /workspace \
+            ${{ matrix.distro.image }} \
+            /bin/bash -c '
+              set -e
+
+              # Mirror workaround for apt updates
+              sed -i "s/deb.debian.org/mirrors.ustc.edu.cn/g" /etc/apt/sources.list.d/debian.sources 2>/dev/null || true
+              sed -i "s/archive.ubuntu.com/mirrors.ustc.edu.cn/g" /etc/apt/sources.list 2>/dev/null || true
+              sed -i "s/ports.ubuntu.com/mirrors.ustc.edu.cn/g" /etc/apt/sources.list 2>/dev/null || true
+
+              DISTRO_NAME="${{ matrix.distro.name }}"
+              DISTRO_CODENAME="${{ matrix.distro.codename }}"
+              ENABLE_UNIVERSE="${{ matrix.distro.enable-universe }}"
+
+              # Enable universe for Ubuntu
+              if [ "$ENABLE_UNIVERSE" = "true" ]; then
+                apt-get update
+                apt-get install -y software-properties-common 2>/dev/null || true
+                add-apt-repository -y universe 2>/dev/null || true
+              fi
+
+              apt-get update
+
+              # Install build dependencies
+              DEBIAN_FRONTEND=noninteractive apt-get install -y \
+                build-essential \
+                debhelper \
+                cmake \
+                qt6-base-dev \
+                qt6-base-dev-tools \
+                file \
+                devscripts
+
+              # Set distribution in changelog
+              cd /workspace
+              dch --distribution "$DISTRO_CODENAME" --local "+${DISTRO_CODENAME}" \
+                "Build for ${DISTRO_NAME} (${{ matrix.arch }})." 2>/dev/null || true
+
+              # Build the package
+              dpkg-buildpackage -us -uc -b 2>&1
+
+              # Collect artifacts (dpkg-buildpackage outputs to parent directory)
+              mkdir -p /workspace/artifacts
+              cp /*.deb  /workspace/artifacts/ 2>/dev/null || true
+              cp /*.buildinfo /workspace/artifacts/ 2>/dev/null || true
+              cp /*.changes   /workspace/artifacts/ 2>/dev/null || true
+
+              echo "=== Built packages ==="
+              ls -la /workspace/artifacts/
+            '
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.distro.name }}-${{ matrix.arch }}
+          path: artifacts/
+          retention-days: 30
