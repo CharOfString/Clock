@@ -1,0 +1,27 @@
+Source: clock
+Section: utils
+Priority: optional
+Maintainer: MarcusPy827 <markus_verify@126.com>
+Build-Depends: debhelper-compat (= 13),
+               cmake (>= 3.28),
+               qt6-base-dev (>= 6.2.0) | qtbase5-dev (>= 5.15.15),
+               qt6-base-dev-tools (>= 6.2.0) | qtbase5-dev-tools (>= 5.15.15)
+Standards-Version: 4.7.0
+Homepage: https://gitee.com/MarcusP/clock
+Vcs-Git: https://gitee.com/MarcusP/clock.git
+Rules-Requires-Root: no
+
+Package: clock
+Architecture: any
+Depends: ${shlibs:Depends},
+         ${misc:Depends}
+Description: Simple Qt-based desktop clock
+ Clock is a lightweight desktop clock application built with Qt.
+ It displays the current time in 12-hour format, along with the date,
+ weekday, and time zone information.
+ .
+ Features:
+  - 12-hour time display
+  - Current date and weekday
+  - Time zone support
+  - Multi-language support (Chinese)

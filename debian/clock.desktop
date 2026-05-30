@@ -1,0 +1,13 @@
+[Desktop Entry]
+Type=Application
+Name=Desktop Clock
+Name[zh_CN]=桌面时钟
+GenericName=Desktop Clock
+GenericName[zh_CN]=桌面时钟
+Comment=A simple Qt-based desktop clock
+Comment[zh_CN]=一个基于Qt的简易桌面时钟
+Icon=clock
+Exec=charclock
+Terminal=false
+Categories=Qt;Utility;Clock;
+Keywords=clock;time;date;timezone;

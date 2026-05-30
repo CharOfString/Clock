@@ -1,0 +1,10 @@
+# Debian source package options
+
+# Do not include these in the source tarball
+tar-ignore = ".git"
+tar-ignore = ".gitignore"
+tar-ignore = ".idea"
+tar-ignore = "build"
+
+# Extend diff to cover binary files like PNG icons
+extend-diff-ignore = "\.png$$"

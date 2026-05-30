@@ -1,0 +1,13 @@
+clock for Debian
+================
+
+This is a simple Qt-based desktop clock application.
+
+Build instructions:
+  dpkg-buildpackage -us -uc -b
+
+Qt6 / Qt5 compatibility:
+  The package prefers Qt6. To build with Qt5, install qtbase5-dev
+  and qtbase5-dev-tools instead.
+
+ -- MarcusPy827 <markus_verify@126.com>  Fri, 30 May 2026

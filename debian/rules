@@ -1,0 +1,31 @@
+#!/usr/bin/make -f
+# -*- makefile -*-
+
+export QT_QPA_PLATFORM=offscreen
+
+%:
+	dh $@ --buildsystem=cmake
+
+# Override: upstream CMakeLists.txt has no install() directives,
+# so manually stage the built binary and auxiliary files to debian/tmp/.
+# dh_install will then move them from debian/tmp/ to the package directory.
+override_dh_auto_install:
+	# Locate and stage the built binary
+	install -D -m 755 $$(find . -name 'charclock' -type f -executable -not -path '*/debian/*' | head -1) \
+		$(CURDIR)/debian/tmp/usr/bin/charclock
+
+	# Stage the desktop entry
+	install -D -m 644 debian/clock.desktop \
+		$(CURDIR)/debian/tmp/usr/share/applications/clock.desktop
+
+	# Stage the application icon (PNG, works on all platforms)
+	install -D -m 644 res/icon/icon.png \
+		$(CURDIR)/debian/tmp/usr/share/icons/hicolor/256x256/apps/clock.png
+
+# Override: skip dh_auto_test (no test suite defined upstream)
+override_dh_auto_test:
+	@echo "Skipping tests: no test suite provided by upstream"
+
+# Don't compress .qrc resources
+override_dh_compress:
+	dh_compress -X.qrc
